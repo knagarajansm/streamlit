@@ -34,7 +34,11 @@ from streamlit import runtime
 from streamlit.elements.form_utils import current_form_id, is_in_form
 from streamlit.elements.lib.policies import check_widget_policies
 from streamlit.elements.lib.utils import Key, to_key
-from streamlit.errors import StreamlitAPIException
+from streamlit.errors import (
+    StreamlitAPIException,
+    StreamlitMissingPageLabelError,
+    StreamlitPageNotFoundError,
+)
 from streamlit.file_util import get_main_script_directory, normalize_path_join
 from streamlit.navigation.page import StreamlitPage
 from streamlit.proto.Button_pb2 import Button as ButtonProto
@@ -709,7 +713,7 @@ class ButtonMixin:
             # Handle external links:
             if is_url(page):
                 if label is None or label == "":
-                    raise StreamlitAPIException(
+                    raise StreamlitMissingPageLabelError(
                         "The label param is required for external links used with st.page_link - please provide a label."
                     )
                 else:
@@ -741,11 +745,8 @@ class ButtonMixin:
                     break
 
             if page_link_proto.page_script_hash == "":
-                raise StreamlitAPIException(
-                    f"Could not find page: `{page}`. Must be the file path relative to "
-                    "the main script, from the directory: "
-                    f"`{os.path.basename(main_script_directory)}`. Only the main app "
-                    "file and files in the `pages/` directory are supported."
+                raise StreamlitPageNotFoundError(
+                    page=page, main_script_directory=main_script_directory
                 )
 
         return self.dg._enqueue("page_link", page_link_proto)
